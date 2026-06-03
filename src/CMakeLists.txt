@@ -1,0 +1,6 @@
+add_subdirectory(common)
+# add_subdirectory(compiler)
+# add_subdirectory(query)
+# add_subdirectory(executor)
+# add_subdirectory(storage)
+# add_subdirectory(service)
