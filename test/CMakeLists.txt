@@ -19,6 +19,8 @@ add_subdirectory(third_party)
 # 添加源码编译
 add_subdirectory(${PROJECT_ROOT}/src ${CMAKE_BINARY_DIR}/src)
 
+add_subdirectory(${PROJECT_ROOT}/third_party ${CMAKE_BINARY_DIR}/third_party_src/)
+
 if (${TEST} STREQUAL "UT_COMMON")
     add_subdirectory(dt/ut/common)
 endif()

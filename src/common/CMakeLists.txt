@@ -1,3 +1,6 @@
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} SRC_COMMON)
-add_library(common OBJECT ${SRC_COMMON})
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/memory SRC_COMMON_MEMORY)
+add_library(common OBJECT ${SRC_COMMON} ${SRC_COMMON_MEMORY})
 target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# 链接 jemalloc(传递依赖, 让使用 common 的目标也能获取 jemalloc)
+target_link_libraries(common PUBLIC jemalloc)

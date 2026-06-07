@@ -1,5 +1,6 @@
 #pragma once
 #include <assert.h>
+#include <stdint.h>
 typedef enum {
     NEBULA_OK = 0,
     NEBULA_FAILED_OPERATE_FILE,
@@ -16,3 +17,11 @@ typedef enum {
 #define DB_POINTER(p)
 #endif
 #define SIZE_K(n) (n * 1024)
+
+// 将请求 size 向上对齐到 alignment 的整数倍(alignment 必须是 2 的幂)
+static inline uint64_t align_up(uint64_t size, uint64_t alignment) 
+{
+    DB_ASSERT((alignment & (alignment - 1)) == 0);
+    return (size + alignment - 1) & ~(alignment - 1);
+}
+

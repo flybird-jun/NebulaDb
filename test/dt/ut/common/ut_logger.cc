@@ -57,7 +57,6 @@ bool file_exists(const std::string &path) {
 // 注意: 这是第一个调 init 的测试，level 设为 INFO 供所有测试使用
 TEST_F(LoggerTest, LevelFilter) {
     Logger::get_logger().init(test_dir_, "test", Logger::INFO, 3, 1);
-
     LOG_DEBUG("debug msg");
     LOG_INFO("info msg");
     LOG_ERROR(NEBULA_INVALID_ARGS, "error msg");
