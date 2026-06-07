@@ -49,27 +49,6 @@ Status Logger::init(const std::string &path, const std::string &file_name, Level
     return NEBULA_OK;
 }
 
-// 日志格式: time [Level][MODULE] pid tid | [Status] message\n
-void Logger::write(Level level, Status ret, const std::string &module, std::string_view fmt, std::format_args &&args) {
-    if (!inited_ || fd_ < 0 || level < effect_level_) {
-        return;
-    }
-    std::string_view level_string[] = {"DEBUG", "INFO", "ERROR"};
-    auto now = std::chrono::system_clock::now();
-    auto zt = std::chrono::zoned_time{std::chrono::current_zone(), now};
-
-    auto log = std::format("{} [{}] [{}] {} {} | [ERROR-{}] {}\n",
-        std::format("{:%Y-%m-%d %H:%M:%S}", zt),
-        level_string[level],
-        module,
-        pid_,
-        static_cast<uint64_t>(pthread_self()),
-        static_cast<uint32_t>(ret),
-        std::vformat(fmt, args));
-
-    ::write(fd_, log.data(), log.length());
-}
-
 Logger::~Logger() {
     ::close(fd_);
     inited_ = false;

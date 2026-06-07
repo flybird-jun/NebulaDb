@@ -32,7 +32,28 @@ public:
     // level: 日志级别
     // module: 模块标签，写入 [MODULE] 字段
     // format: printf 风格格式化字符串
-    void write(Level level, Status ret, const std::string &module, std::string_view fmt, std::format_args&& args);
+    // 日志格式: time [Level][MODULE] pid tid | [Status] message\n
+    template<typename... Args>
+    void write(Level level, Status ret, const std::string &module, std::string_view fmt, Args&&... args) {
+        if (!inited_ || fd_ < 0 || level < effect_level_) {
+            return;
+        }
+
+        std::string_view level_string[] = {"DEBUG", "INFO", "ERROR"};
+        auto now = std::chrono::system_clock::now();
+        auto zt = std::chrono::zoned_time{std::chrono::current_zone(), now};
+
+        auto log = std::format("{} [{}] [{}] {} {} | [ERROR-{}] {}\n",
+            std::format("{:%Y-%m-%d %H:%M:%S}", zt),
+            level_string[level],
+            module,
+            pid_,
+            static_cast<uint64_t>(pthread_self()),
+            static_cast<uint32_t>(ret),
+            std::vformat(fmt, std::make_format_args(args...)));
+
+        ::write(fd_, log.data(), log.length());
+    }
 
     // 析构前需要flush所有未写入数据
     ~Logger();
@@ -53,8 +74,8 @@ private:
     bool inited_ = false;       // 是否已经初始化
 };
 
-#define LOG_DEBUG(format, ...) Logger::get_logger().write(Logger::DEBUG, NEBULA_OK, MODULE_NAME, format, std::make_format_args(__VA_ARGS__))
-#define LOG_INFO(format, ...) Logger::get_logger().write(Logger::INFO, NEBULA_OK, MODULE_NAME, format, std::make_format_args(__VA_ARGS__))
-#define LOG_ERROR(ret, format, ...) Logger::get_logger().write(Logger::ERROR, ret, MODULE_NAME, format, std::make_format_args(__VA_ARGS__))
+#define LOG_DEBUG(format, ...) Logger::get_logger().write(Logger::DEBUG, NEBULA_OK, MODULE_NAME, format, ##__VA_ARGS__)
+#define LOG_INFO(format, ...) Logger::get_logger().write(Logger::INFO, NEBULA_OK, MODULE_NAME, format, ##__VA_ARGS__)
+#define LOG_ERROR(ret, format, ...) Logger::get_logger().write(Logger::ERROR, ret, MODULE_NAME, format, ##__VA_ARGS__)
 
 }

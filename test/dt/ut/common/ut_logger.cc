@@ -60,7 +60,9 @@ TEST_F(LoggerTest, LevelFilter) {
     LOG_DEBUG("debug msg");
     LOG_INFO("info msg");
     LOG_ERROR(NEBULA_INVALID_ARGS, "error msg");
-
+    LOG_ERROR(NEBULA_INVALID_ARGS, "error msg = ", 1);
+    int x = 20;
+    LOG_ERROR(NEBULA_INVALID_ARGS, "error msg = ", x);
     std::string content = read_file(test_dir_ + "/test.log");
     EXPECT_EQ(content.find("debug msg"), std::string::npos);
     EXPECT_NE(content.find("info msg"), std::string::npos);
@@ -72,10 +74,10 @@ TEST_F(LoggerTest, ModuleLabel) {
     // init 是幂等的，此处调用不会改变已生效的设置
     Logger::get_logger().init(test_dir_, "test", Logger::INFO, 3, 1);
 
-    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Storage", "msg1", std::make_format_args());
-    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Executor", "msg2", std::make_format_args());
-    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common", "msg3", std::make_format_args());
-    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Query", "msg4", std::make_format_args());
+    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Storage", "msg1");
+    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Executor", "msg2");
+    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common", "msg3");
+    Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Query", "msg4");
 
     std::string content = read_file(test_dir_ + "/test.log");
     EXPECT_NE(content.find("[Storage]"), std::string::npos);
@@ -90,7 +92,7 @@ TEST_F(LoggerTest, LogFormat) {
 
     int v = 123;
     Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                               "test message {}", std::make_format_args(v));
+                               "test message {}", v);
 
     std::string content = read_file(test_dir_ + "/test.log");
     // 格式: YYYY-MM-DD HH:MM:SS.fffffffff [INFO] [Common] pid tid | [ERROR-0] test message 123
@@ -115,7 +117,7 @@ TEST_F(LoggerTest, FormatStyle) {
     int a = 10;
     size_t b = 4096;
     Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Storage",
-                               "block {} size {}", std::make_format_args(a, b));
+                               "block {} size {}", a, b);
 
     std::string content = read_file(test_dir_ + "/test.log");
     EXPECT_NE(content.find("block 10 size 4096"), std::string::npos);
@@ -148,7 +150,7 @@ TEST_F(LoggerTest, ConcurrentWriteSync) {
                 int tt = t;
                 int ss = s;
                 Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                                           "sync-{}-{}", std::make_format_args(tt, ss));
+                                           "sync-{}-{}", tt, ss);
             }
         });
     }
@@ -181,7 +183,7 @@ TEST_F(LoggerTest, DestructorFlush) {
     for (int i = 0; i < 10; ++i) {
         int ii = i;
         Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                                   "destruct-{}", std::make_format_args(ii));
+                                   "destruct-{}", ii);
     }
 
     // O_APPEND 模式下 write 已直接进入 OS 缓冲区，文件应包含新增的 10 行
@@ -225,7 +227,7 @@ TEST_F(LoggerTest, EmptyMessage) {
 
     EXPECT_NO_THROW(LOG_INFO(""));
     EXPECT_NO_THROW(Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                                               std::string_view(""), std::make_format_args()));
+                                               std::string_view("")));
 
     // 不验证具体行数(文件累积内容)，只验证不崩溃
 }
@@ -236,7 +238,7 @@ TEST_F(LoggerTest, LongMessage) {
 
     std::string long_msg(10240, 'A'); // 10KB
     Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                               "{}", std::make_format_args(long_msg));
+                               "{}", long_msg);
 
     std::string content = read_file(test_dir_ + "/test.log");
     // 超长消息可能因缓冲区大小被截断(当前 logger 实现未做超长消息优化)
@@ -249,11 +251,11 @@ TEST_F(LoggerTest, SpecialChars) {
     Logger::get_logger().init(test_dir_, "test", Logger::INFO, 3, 1);
 
     Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                               "line1\nline2", std::make_format_args());
+                               "line1\nline2");
 
     // 特殊字符处理依赖具体实现，仅验证不崩溃
     EXPECT_NO_THROW(Logger::get_logger().write(Logger::INFO, NEBULA_OK, "Common",
-                                               "tab\there", std::make_format_args()));
+                                               "tab\there"));
 }
 
 // 4.18 边界与异常测试-05: 日志目录不存在或权限不足
